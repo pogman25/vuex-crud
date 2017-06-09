@@ -1,4 +1,4 @@
-import { FILTER, ADD_TODO, DEL_TODO, UPD_TODO } from '../constants';
+import { FILTER, ADD_TODO, DEL_TODO, UPD_TODO, VISIBLE } from '../constants';
 import { loadState, saveState } from './localStorage'
 
 export default {
@@ -6,7 +6,8 @@ export default {
         todos: loadState() || [
                                 { id: 1, text: 'some text', done: true },
                                 { id: 2, text: 'todos', done: false }
-                              ]
+                              ],
+        visible: 'all'
     },
 
     getters: {
@@ -52,6 +53,9 @@ export default {
                 ...state.todos.slice(index+1)
             ];
             saveState(state.todos);
+        },
+        [VISIBLE] (state, filter) {
+            state.visible = filter;
         }
     }
 }
