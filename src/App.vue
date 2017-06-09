@@ -7,8 +7,13 @@
         span(v-if="error") {{error}}
     transition-group(name="list" tag="ul")
       li(v-for="item in filter", :key="item.id" class="list-item")
-        h3(:class="{ done: item.done }", @click="event(item.id, item.done)") {{ item.text }}
-        div(@click="delTodo(item.id)") X
+        .current(v-if="updatedId !== item.id")
+          h3(:class="{ done: item.done }", @click="event(item.id, item.done)") {{ item.text }}
+          div(@click="upTodo(item.id, item.text)") Update
+          div(@click="delTodo(item.id)") X
+        .update(v-if="updatedId === item.id")
+          input(v-model="updatedTodo", @keyup.enter="update(item.id, item.done)", @keyup.esc="esc")
+          button(@click="update(item.id, item.done)") Update
     .filter
       p(@click="showAll", :class="{active: shown==='all'}") show all
       p(@click="showDone", :class="{active: shown==='done'}") done
@@ -19,15 +24,17 @@
 import uuidV1 from 'uuid';
 import { mapGetters } from 'vuex';
 import { mapState } from 'vuex';
-import { FILTER, ADD_TODO, DEL_TODO } from './constants'
+import { FILTER, ADD_TODO, DEL_TODO, UPD_TODO } from './constants'
 
 export default {
   name: 'app',
   data () {
     return {
       newTodo: '',
+      updatedTodo: '',
       error: '',
       shown: 'all',
+      updatedId: ''
     }
   },
     computed: {
@@ -73,9 +80,26 @@ export default {
               this.error = 'fill form';
           }
       },
-        delTodo: function (id) {
-            this.$store.commit(DEL_TODO, id);
-        }
+      delTodo: function (id) {
+        this.$store.commit(DEL_TODO, id);
+      },
+      upTodo: function (id, text) {
+          this.updatedId = id;
+          this.updatedTodo = text;
+      },
+      update: function (id, done) {
+          const payload = {
+              id,
+              text: this.updatedTodo,
+              done
+          };
+          this.$store.commit(UPD_TODO, payload);
+          this.updatedId = '';
+          this.updatedTodo = '';
+      },
+      esc: function () {
+          this.updatedId = '';
+      }
     }
 }
 </script>
@@ -123,6 +147,7 @@ export default {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
+    margin-bottom: 20px;
 
     span {
         width: 100%;
@@ -135,10 +160,6 @@ export default {
 
 h1, h2 {
   font-weight: normal;
-}
-
-h3 {
-    cursor: pointer;
 }
 
 p {
@@ -170,19 +191,40 @@ ul {
   display: flex;
   flex-direction: column;
   margin-top: 0;
-    overflow: hidden;
+  overflow: hidden;
+    box-shadow: 5px 5px 5px 5px #000;
 }
 
 li {
-  display: inline-flex;
-  justify-content: center;
-  align-items: baseline;
-  margin: 0 10px;
+  .current, .update {
+      width: 90%;
+      display: inline-flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 0 10px;
 
-  div {
-      margin: 0 20px;
-      cursor: pointer;
+      h3 {
+          text-align: left;
+          flex: 6 1 0;
+          cursor: pointer;
+      }
+
+      div {
+          flex: 1 1 0;
+          margin: 0 20px;
+          cursor: pointer;
+      }
   }
+    .update {
+        margin: 10px auto;
+        input {
+            flex: 8 1 0;
+        }
+        button {
+            flex: 2 1 0;
+            height: 40px;
+        }
+    }
 }
 
 .list-enter-active, .list-leave-active {
